@@ -1,0 +1,116 @@
+<!-- edit.erb -->
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2>Edit PDF</h2>
+      <div>
+        <a href="/" class="btn btn-outline-secondary me-2">New Upload</a>
+        <a href="/download" class="btn btn-success">Download PDF</a>
+      </div>
+    </div>
+    <p>Current file: <%= @filename %> (<%= @page_count %> pages)</p>
+
+    <% if session[:message] %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= session[:message] %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      <% session[:message] = nil %>
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4>Remove Pages</h4>
+      </div>
+      <div class="card-body">
+        <form action="/remove_pages" method="post">
+          <div class="mb-3">
+            <label for="pages" class="form-label">Pages to remove (comma separated):</label>
+            <input type="text" class="form-control" id="pages" name="pages"
+                   placeholder="e.g. 1,3,5" required>
+            <small class="form-text text-muted">Enter page numbers separated by commas.</small>
+          </div>
+          <button type="submit" class="btn btn-danger">Remove Pages</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4>Add Pages from Another PDF</h4>
+      </div>
+      <div class="card-body">
+        <form action="/add_pages" method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="file" class="form-label">Select a PDF file to add:</label>
+            <input type="file" class="form-control" id="file" name="file" accept=".pdf" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Position to add:</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="position" id="beginning" value="beginning">
+              <label class="form-check-label" for="beginning">
+                At the beginning
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="position" id="end" value="end" checked>
+              <label class="form-check-label" for="end">
+                At the end
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="position" id="specific" value="specific">
+              <label class="form-check-label" for="specific">
+                At a specific position
+              </label>
+              <input type="number" class="form-control mt-2" id="page_number" name="page_number"
+                     placeholder="Page number" min="1" max="<%= @page_count + 1 %>">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Pages</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4>Convert PDF to JPG</h4>
+      </div>
+      <div class="card-body">
+        <form action="/pdf_to_jpg" method="post">
+          <p>Convert the current PDF to JPG images:</p>
+          <button type="submit" class="btn btn-info">Convert to JPG</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4>Convert JPG to PDF</h4>
+      </div>
+      <div class="card-body">
+        <form action="/jpg_to_pdf" method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="files" class="form-label">Select JPG images:</label>
+            <input type="file" class="form-control" id="files" name="files[]" accept=".jpg,.jpeg" multiple required>
+            <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple files.</small>
+          </div>
+          <button type="submit" class="btn btn-info">Convert to PDF</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
