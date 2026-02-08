@@ -276,6 +276,85 @@ post '/jpg_to_pdf' do
   end
 end
 
+# Split PDF by file size
+post '/split_pdf' do
+  filename = session[:current_pdf]
+  max_size_mb = params[:max_size_mb].to_f
+
+  if filename.nil? || max_size_mb <= 0
+    redirect '/edit'
+  end
+
+  begin
+    max_bytes = (max_size_mb * 1024 * 1024).to_i
+    pdf = CombinePDF.load("public/uploads/#{filename}")
+    pages = pdf.pages
+
+    if pages.empty?
+      session[:message] = "PDF has no pages to split."
+      redirect '/edit'
+    end
+
+    chunks = []
+    current_chunk = CombinePDF.new
+    current_chunk_page_count = 0
+
+    pages.each do |page|
+      # Try adding this page to the current chunk
+      test_chunk = CombinePDF.new
+      # Re-add existing pages from current chunk
+      current_chunk.pages.each { |p| test_chunk << p }
+      test_chunk << page
+
+      if current_chunk_page_count > 0 && test_chunk.to_pdf.bytesize > max_bytes
+        # Current chunk is full, save it and start a new one
+        chunks << current_chunk
+        current_chunk = CombinePDF.new
+        current_chunk << page
+        current_chunk_page_count = 1
+      else
+        current_chunk << page
+        current_chunk_page_count += 1
+      end
+    end
+
+    # Don't forget the last chunk
+    chunks << current_chunk if current_chunk_page_count > 0
+
+    # Save chunks to disk
+    split_folder = SecureRandom.uuid
+    FileUtils.mkdir_p("public/processed/#{split_folder}")
+
+    chunks.each_with_index do |chunk, idx|
+      chunk.save("public/processed/#{split_folder}/chunk_#{idx + 1}.pdf")
+    end
+
+    # Zip the chunks
+    `zip -j public/processed/#{split_folder}.zip public/processed/#{split_folder}/*`
+
+    session[:split_zip] = "#{split_folder}.zip"
+    session[:message] = "PDF split into #{chunks.length} chunk(s)."
+    redirect '/download_split'
+  rescue => e
+    @error = "Error splitting PDF: #{e.message}"
+    erb :edit
+  end
+end
+
+# Download split PDF zip
+get '/download_split' do
+  zip_file = session[:split_zip]
+
+  if zip_file.nil?
+    redirect '/edit'
+  end
+
+  send_file "public/processed/#{zip_file}",
+            type: 'application/zip',
+            disposition: 'attachment',
+            filename: 'split_pdf.zip'
+end
+
 # Download the edited PDF
 get '/download' do
   filename = session[:current_pdf]

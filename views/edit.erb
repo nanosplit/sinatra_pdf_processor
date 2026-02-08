@@ -114,3 +114,24 @@
     </div>
   </div>
 </div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4>Split PDF by File Size</h4>
+      </div>
+      <div class="card-body">
+        <form action="/split_pdf" method="post">
+          <div class="mb-3">
+            <label for="max_size_mb" class="form-label">Maximum file size per chunk (MB):</label>
+            <input type="number" class="form-control" id="max_size_mb" name="max_size_mb"
+                   value="25" min="1" step="1" required>
+            <small class="form-text text-muted">Each chunk will be kept under this size limit.</small>
+          </div>
+          <button type="submit" class="btn btn-warning">Split PDF</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
